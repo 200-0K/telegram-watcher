@@ -1,0 +1,4 @@
+{
+  "editor.formatOnSave": true,
+  "window.title": "${dirty}${activeEditorShort}${separator}Watcher${separator}${profileName}${separator}${appName}"
+}
