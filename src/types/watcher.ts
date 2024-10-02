@@ -6,7 +6,18 @@ interface GeneralWatcher {
   // channels: Channel[];
   requestType?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   responseType: 'text' | 'json';
-  headers?: () => HeadersInit | undefined;
+  headers?: () => Promise<HeadersInit | undefined>;
+  // auth?: {
+  //   authType: 'bearer';
+  //   token: string;
+  // } & (
+  //   {
+  //     refreshUrl: string;
+  //     refreshToken: string;
+  //     needRefresh?: (token: string) => boolean;
+  //     refresh?: (response: any, status: number) => Promise<string>;
+  //   } | undefined
+  // )
 }
 
 interface ChangeWatcher {

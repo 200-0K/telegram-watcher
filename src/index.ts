@@ -6,7 +6,7 @@ import { watchers } from "./watchers";
 for (const watcher of watchers) {
   const response = await fetch(watcher.url, {
     method: watcher.requestType ?? 'GET',
-    headers: watcher.headers?.(),
+    headers: await watcher.headers?.(),
   });
   const text = await response.text();
 
