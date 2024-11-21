@@ -10,8 +10,8 @@ if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN);
 
 export const telegram: Notifier = {
-  send(message: string) {
-    bot.sendMessage(
+  async send(message: string) {
+    await bot.sendMessage(
       TELEGRAM_CHAT_ID!,
       message,
       {
