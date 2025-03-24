@@ -1,8 +1,8 @@
 {
   "name": "telegram-watcher",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Node.js script to periodically check websites and report changes via Telegram",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
