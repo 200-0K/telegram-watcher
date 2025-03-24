@@ -49,9 +49,9 @@ const processStub = (stubPath, replacements) => {
 const createWatcherFile = (targetPath, watcherName) => {
     const displayName = watcherName.charAt(0).toUpperCase() + watcherName.slice(1);
 
-    // Import paths for watchers
-    const importPath = '../../src/types/watcher.js';
-    const localStoragePath = '../../src/helpers/localstorage.js';
+    // Use @ imports
+    const importPath = '@/types/watcher.js';
+    const localStoragePath = '@/helpers/localstorage.js';
 
     const stubPath = path.join(__dirname, 'stubs', 'watcher.stub.ts');
 

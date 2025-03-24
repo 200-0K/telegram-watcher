@@ -1,6 +1,6 @@
-import { parseJson } from "./helpers/json.js";
-import { report } from "./helpers/notifier.js";
-import { loadWatchers } from "./watchers.js";
+import { parseJson } from "@/helpers/json.js";
+import { report } from "@/helpers/notifier.js";
+import { loadWatchers } from "@/watchers.js";
 
 const runWatchers = async () => {
   // Dynamically load all watchers

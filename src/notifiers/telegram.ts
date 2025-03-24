@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
-import { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } from "../constants";
-import { Notifier } from "../types/notifier";
+import { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } from "@/constants.js";
+import { Notifier } from "@/types/notifier.js";
 
 if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
   console.log('TELEGRAM_BOT_TOKEN is not provided');

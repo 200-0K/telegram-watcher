@@ -16,7 +16,7 @@ const watcher: Watcher = {
     //     'Authorization': 'Bearer your-token-here'
     // }),
 
-    notify: (response, status) => {
+    notify: (response: any, status: number): string | null => {
         // Process the API response
         // Return a notification message string, or null if no notification should be sent
 
@@ -32,8 +32,10 @@ const watcher: Watcher = {
 
         // Example: Find new items since last check
         const storageKey = '{{WATCHER_NAME}}-items';
-        const storedItems = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        const newItems = response.items.filter(item => !storedItems.some(s => s.id === item.id));
+        const storedItems = JSON.parse(localStorage.getItem(storageKey) || '[]') as Array<Record<string, any>>;
+        const newItems = response.items.filter((item: any) =>
+            !storedItems.some((s: Record<string, any>) => s.id === item.id)
+        );
 
         if (newItems.length === 0) return null; // No new items
 
