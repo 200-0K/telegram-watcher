@@ -1,8 +1,9 @@
-import { Channel } from "./channel";
+import { Channel } from "./channel.js";
 
 interface GeneralWatcher {
   name: string;
   url: string;
+  enabled?: boolean; // indicates if the watcher is active, defaults to true
   // channels: Channel[];
   requestType?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   responseType: 'text' | 'json';

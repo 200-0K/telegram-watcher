@@ -1,0 +1,19 @@
+{
+    "apiKey": "your-api-key-here",
+    "items": [
+        {
+            "id": "123",
+            "name": "Example Item 1",
+            "url": "https://example.com/item/123"
+        },
+        {
+            "id": "456",
+            "name": "Example Item 2",
+            "url": "https://example.com/item/456"
+        }
+    ],
+    "settings": {
+        "refreshInterval": 60,
+        "maxItems": 50
+    }
+}
