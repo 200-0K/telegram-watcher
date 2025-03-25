@@ -1,40 +1,33 @@
 import { Channel } from "./channel.js";
 
-interface GeneralWatcher {
+// Base interface for all watchers - only truly shared properties
+interface BaseWatcher {
   name: string;
-  url: string;
   enabled?: boolean; // indicates if the watcher is active, defaults to true
-  // channels: Channel[];
+}
+
+// For watchers that make direct HTTP requests to a single URL
+interface URLWatcher extends BaseWatcher {
+  type: 'url';
+  url: string;
   requestType?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   responseType: 'text' | 'json';
   headers?: () => Promise<HeadersInit | undefined>;
-  // auth?: {
-  //   authType: 'bearer';
-  //   token: string;
-  // } & (
-  //   {
-  //     refreshUrl: string;
-  //     refreshToken: string;
-  //     needRefresh?: (token: string) => boolean;
-  //     refresh?: (response: any, status: number) => Promise<string>;
-  //   } | undefined
-  // )
+  notify: (response: any, status: number) => string | null;
 }
 
-interface ChangeWatcher {
-  watchType: 'change';
-  notify: () => string
+// For watchers that manage their own state and complex logic
+interface ManagedWatcher extends BaseWatcher {
+  type: 'managed';
+  // Instead of a single URL, we provide a function to handle the entire watching process
+  watch: () => Promise<string | null>;
 }
 
-// interface MatchWatcher {
-//   watchType: 'match';
-// }
-
-interface CustomWatcher {
-  watchType: 'custom';
-  notify: (response: any, status: number) => string | null
+// For watchers that monitor file changes
+interface FileWatcher extends BaseWatcher {
+  type: 'file';
+  filePath: string;
+  notify: (content: string) => string | null;
 }
 
-export type Watcher = GeneralWatcher & (
-  CustomWatcher /* | ChangeWatcher */
-);
+export type Watcher = URLWatcher | ManagedWatcher | FileWatcher;

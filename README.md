@@ -89,9 +89,9 @@ import { localStorage } from "../../src/helpers/localstorage.js";
 
 const watcher: Watcher = {
     name: 'My Watcher',
+    type: 'url',
     url: 'https://api.example.com/endpoint',
     enabled: true,
-    watchType: 'custom',
     responseType: 'json',
     
     notify: (response, status) => {
