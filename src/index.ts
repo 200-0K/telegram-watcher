@@ -29,10 +29,10 @@ const runWatchers = async () => {
 
       const message = watcher.notify(data, response.status);
       if (message) {
-        report(watcher.name, message);
+        await report(watcher.name, message);
       }
     } catch (e) {
-      report(watcher.name, `Error:\n\`\`\`\n${e}\n\`\`\``);
+      await report(watcher.name, `Error:\n\`\`\`\n${e}\n\`\`\``);
     }
   }
 };

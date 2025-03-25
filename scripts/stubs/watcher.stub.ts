@@ -16,7 +16,7 @@ const watcher: Watcher = {
     //     'Authorization': 'Bearer your-token-here'
     // }),
 
-    notify: (response: any, status: number): string | null => {
+    notify: (response: any, status: number) => {
         // Process the API response
         // Return a notification message string, or null if no notification should be sent
 
