@@ -14,18 +14,96 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
+/**
+ * Validates a watcher name
+ * @param {string} watcherName - The name to validate
+ * @returns {boolean} - Whether the name is valid
+ */
+const validateWatcherName = (watcherName) => {
+    return /^[a-z0-9-]+$/.test(watcherName);
+};
+
+/**
+ * Read a stub file and replace placeholders with values
+ * @param {string} stubPath - Path to the stub file
+ * @param {Object} replacements - Key-value pairs for replacements
+ * @returns {string} - The content with replacements
+ */
+const processStub = (stubPath, replacements) => {
+    let content = fs.readFileSync(stubPath, 'utf8');
+
+    // Replace all placeholders
+    Object.keys(replacements).forEach(key => {
+        const placeholder = `{{${key}}}`;
+        content = content.replace(new RegExp(placeholder, 'g'), replacements[key]);
+    });
+
+    return content;
+};
+
+/**
+ * Creates a watcher file from template
+ * @param {string} targetPath - Path to write the file to
+ * @param {string} watcherName - The name of the watcher
+ */
+const createWatcherFile = (targetPath, watcherName) => {
+    const displayName = watcherName.charAt(0).toUpperCase() + watcherName.slice(1);
+
+    // Use @ imports
+    const importPath = '@/types/watcher.js';
+    const localStoragePath = '@/helpers/localstorage.js';
+
+    const stubPath = path.join(__dirname, 'stubs', 'watcher.stub.ts');
+
+    const content = processStub(stubPath, {
+        'IMPORT_PATH': importPath,
+        'LOCALSTORAGE_PATH': localStoragePath,
+        'DISPLAY_NAME': displayName,
+        'WATCHER_NAME': watcherName
+    });
+
+    fs.writeFileSync(targetPath, content);
+};
+
+/**
+ * Creates a package.json file for watchers
+ * @param {string} targetPath - Path to write the file to
+ * @param {string} watcherName - The name of the watcher
+ */
+const createPackageJsonFile = (targetPath, watcherName) => {
+    const displayName = watcherName.charAt(0).toUpperCase() + watcherName.slice(1);
+    const stubPath = path.join(__dirname, 'stubs', 'package.stub.json');
+
+    const content = processStub(stubPath, {
+        'WATCHER_NAME': watcherName,
+        'DISPLAY_NAME': displayName
+    });
+
+    fs.writeFileSync(targetPath, content);
+};
+
+/**
+ * Creates a tsconfig.json file for watchers
+ * @param {string} targetPath - Path to write the file to
+ */
+const createTsConfigFile = (targetPath) => {
+    const stubPath = path.join(__dirname, 'stubs', 'tsconfig.stub.json');
+    fs.copyFileSync(stubPath, targetPath);
+};
+
 // Prompt for watcher name
 rl.question('Enter the name of your watcher (lowercase, no spaces): ', (watcherName) => {
-    // Validate watcher name (only alphanumeric and hyphens)
-    if (!/^[a-z0-9-]+$/.test(watcherName)) {
+    // Validate watcher name
+    if (!validateWatcherName(watcherName)) {
         console.error('Error: Watcher name must contain only lowercase letters, numbers, and hyphens');
         rl.close();
         return;
     }
 
-    const templatePath = path.join(process.cwd(), 'src', 'templates', 'watcher.ts');
-    const watcherDir = path.join(process.cwd(), 'src', 'watchers', watcherName);
-    const watcherPath = path.join(watcherDir, 'index.ts');
+    // Create watcher in watchers directory with src subfolder
+    const watcherDir = path.join(process.cwd(), 'watchers', watcherName);
+    const srcDir = path.join(watcherDir, 'src');
+    const watcherPath = path.join(srcDir, 'index.ts');
 
     // Check if watcher already exists
     if (fs.existsSync(watcherDir)) {
@@ -35,25 +113,36 @@ rl.question('Enter the name of your watcher (lowercase, no spaces): ', (watcherN
     }
 
     try {
-        // Create watcher directory
-        fs.mkdirSync(watcherDir, { recursive: true });
+        // Create directories
+        fs.mkdirSync(srcDir, { recursive: true });
 
-        // Read template file
-        let templateContent = fs.readFileSync(templatePath, 'utf8');
+        // Create package.json
+        createPackageJsonFile(
+            path.join(watcherDir, 'package.json'),
+            watcherName
+        );
 
-        // Fix import paths for the new watcher location
-        templateContent = templateContent.replace("../types/watcher.js", "../../types/watcher.js");
-        templateContent = templateContent.replace("../../helpers/localstorage.js", "../../../helpers/localstorage.js");
+        // Create tsconfig.json
+        createTsConfigFile(
+            path.join(watcherDir, 'tsconfig.json')
+        );
 
-        // Replace placeholder with actual watcher name
-        templateContent = templateContent.replace(/Your Watcher Name/g, watcherName.charAt(0).toUpperCase() + watcherName.slice(1));
-        templateContent = templateContent.replace(/<your-watcher-name>/g, watcherName);
+        // Create watcher file from template
+        createWatcherFile(watcherPath, watcherName);
 
-        // Write the file
-        fs.writeFileSync(watcherPath, templateContent);
+        console.log(`Successfully created watcher '${watcherName}' with folder structure:`);
+        console.log(`- ${watcherDir}/`);
+        console.log(`  ├── src/`);
+        console.log(`  │   └── index.ts     # Main watcher implementation`);
+        console.log(`  ├── package.json`);
+        console.log(`  └── tsconfig.json`);
 
-        console.log(`Successfully created watcher '${watcherName}' at ${watcherPath}`);
-        console.log(`You can now edit the file to customize your watcher.`);
+        console.log('\nYou can now edit the watcher implementation at:');
+        console.log(watcherPath);
+
+        console.log('\nTo install additional dependencies for your watcher:');
+        console.log(`cd watchers/${watcherName}`);
+        console.log('npm install your-dependency');
     } catch (error) {
         console.error(`Error creating watcher: ${error.message}`);
     }
