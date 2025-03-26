@@ -1,5 +1,9 @@
 # Telegram Watcher
 
+<div align="center">
+  <img src="./assets/demo.gif" alt="Demo GIF">
+</div>
+
 A Node.js script that monitors various sources for changes and reports them via Telegram. The script supports three types of watchers:
 
 - **URL Watchers**: Monitor HTTP endpoints and APIs, supporting GET, POST, PUT, DELETE, and PATCH requests with JSON or text responses
