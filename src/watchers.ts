@@ -1,6 +1,16 @@
 import { Watcher } from "@/types/watcher.js";
 import fs from 'fs';
 import path from 'path';
+import {
+    logInfo,
+    logWarn,
+    logError,
+    logSuccess,
+    logWatcherName,
+    logCount,
+    createSpinner,
+    logSection
+} from "@/helpers/logger.js";
 
 // Create an empty array for watchers
 const watchers: Watcher[] = [];
@@ -17,23 +27,22 @@ const loadWatchers = async (): Promise<Watcher[]> => {
     if (fs.existsSync(watchersPath)) {
         await loadWatchersFromDirectory(watchersPath);
     } else {
-        console.log('No watchers directory found. Create it to add watchers.');
+        logWarn('No watchers directory found. Create it to add watchers.');
     }
 
-    console.log(`Loaded ${watchers.length} watchers: ${watchers.map(w => w.name).join(', ')}`);
+    logSection(`Found ${logCount(watchers.length)} watchers: ${watchers.map(w => logWatcherName(w.name)).join(', ')}`);
     return watchers;
 };
 
 // Helper function to load watchers from a directory
 const loadWatchersFromDirectory = async (dirPath: string): Promise<void> => {
     const watcherDirs = fs.readdirSync(dirPath, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
+        .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.')) // Filter out hidden directories like .git
         .map(dirent => dirent.name);
-
-    console.log(`Found watcher directories: ${watcherDirs.join(', ')}`);
 
     // Load each watcher module
     for (const dir of watcherDirs) {
+        const spinner = createSpinner(`Loading ${logWatcherName(dir)}`);
         try {
             // Check for different file locations, prioritizing TypeScript source
             let watcherFile = path.join(dirPath, dir, 'src', 'index.ts');
@@ -56,18 +65,18 @@ const loadWatchersFromDirectory = async (dirPath: string): Promise<void> => {
             }
 
             if (!exists) {
-                console.warn(`No watcher implementation found for ${dir}, skipping`);
+                spinner.warn(`No implementation found for ${logWatcherName(dir)}`);
                 continue;
             }
 
             // Use an absolute file URL for imports
             const fileUrl = `file://${watcherFile.replace(/\\/g, '/')}`;
-
-            console.log(`Importing watcher from ${fileUrl}`);
             const module = await import(fileUrl);
             watchers.push(module.default);
+            spinner.succeed(`Loaded ${logWatcherName(dir)}`);
         } catch (error) {
-            console.error(`Failed to load watcher from directory ${dir}:`, error);
+            spinner.fail(`Failed to load ${logWatcherName(dir)}`);
+            logError(`Error: ${error}\n`);
         }
     }
 };

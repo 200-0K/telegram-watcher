@@ -1,15 +1,54 @@
 # Telegram Watcher
 
-A Node.js script to periodically check websites and APIs for changes and report them via Telegram.
+A Node.js script that monitors various sources for changes and reports them via Telegram. The script supports three types of watchers:
+
+- **URL Watchers**: Monitor HTTP endpoints and APIs, supporting GET, POST, PUT, DELETE, and PATCH requests with JSON or text responses
+- **Managed Watchers**: Handle complex monitoring scenarios with custom logic and state management
+- **File Watchers**: Monitor local file changes and report modifications
+
+The script is designed to be run as a scheduled task by your system's task scheduler (cron on Linux/Mac or Task Scheduler on Windows).
+
+## How It Works
+
+The script:
+1. Dynamically loads all configured watchers from the `watchers/` directory
+2. Runs all enabled watchers in parallel for better performance
+3. Processes the results and sends notifications via Telegram
+4. Exits after completion
+
+### Scheduling
+
+The script is designed to run as a scheduled task. You can set up scheduling using your system's task scheduler:
+
+#### Windows (Task Scheduler)
+1. Open Task Scheduler
+2. Create a new task
+3. Set the trigger to "On startup" or a specific schedule
+4. Set the action to run: `npm start` in the project directory
+
+#### Linux/Mac (cron)
+Add to your crontab:
+```bash
+# Run every 5 minutes
+*/5 * * * * cd /path/to/telegram-watcher && npm start
+```
+
+Each time the script runs, it will:
+- Check all enabled watchers
+- Send notifications for any changes detected
+- Report any errors via Telegram
+- Exit after completion
 
 ## Features
 
-- Simple plugin system for watchers
-- Dynamic loading of watchers
-- Easy API for creating new watchers
-- Notifications via Telegram
-- Interactive watcher creation with dependency management
-- Flexible CLI with multiple modes
+- Three types of watchers (URL, Managed, File) for different monitoring needs
+- Dynamic loading of watchers from the `watchers/` directory
+- Support for HTTP requests with custom headers and methods
+- JSON and text response handling
+- Local file monitoring
+- Custom monitoring logic through managed watchers
+- Error reporting via Telegram
+- Simple plugin system for creating new watchers
 
 ## Project Structure
 
