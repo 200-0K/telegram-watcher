@@ -8,9 +8,9 @@ import {
   logSuccess,
   logWatcherName,
   logCount,
-  createSpinner,
   logSection,
 } from '@/helpers/logger.js';
+import { Listr } from 'listr2';
 
 // Create an empty array for watchers
 const watchers: Watcher[] = [];
@@ -43,45 +43,53 @@ const loadWatchersFromDirectory = async (dirPath: string): Promise<void> => {
     .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.')) // Filter out hidden directories like .git
     .map(dirent => dirent.name);
 
-  // Load each watcher module
-  for (const dir of watcherDirs) {
-    const spinner = createSpinner(`Loading ${logWatcherName(dir)}`);
-    try {
-      // Check for different file locations, prioritizing TypeScript source
-      let watcherFile = path.join(dirPath, dir, 'src', 'index.ts');
-      let exists = fs.existsSync(watcherFile);
+  // Create tasks to load each watcher
+  const tasks = new Listr(
+    watcherDirs.map(dir => ({
+      title: `Loading ${logWatcherName(dir)}`,
+      task: async (ctx, task) => {
+        try {
+          // Check for different file locations, prioritizing TypeScript source
+          let watcherFile = path.join(dirPath, dir, 'src', 'index.ts');
+          let exists = fs.existsSync(watcherFile);
 
-      // Try other possible locations if the main one doesn't exist
-      if (!exists) {
-        watcherFile = path.join(dirPath, dir, 'src', 'index.js');
-        exists = fs.existsSync(watcherFile);
-      }
+          // Try other possible locations if the main one doesn't exist
+          if (!exists) {
+            watcherFile = path.join(dirPath, dir, 'src', 'index.js');
+            exists = fs.existsSync(watcherFile);
+          }
 
-      if (!exists) {
-        watcherFile = path.join(dirPath, dir, 'index.ts');
-        exists = fs.existsSync(watcherFile);
-      }
+          if (!exists) {
+            watcherFile = path.join(dirPath, dir, 'index.ts');
+            exists = fs.existsSync(watcherFile);
+          }
 
-      if (!exists) {
-        watcherFile = path.join(dirPath, dir, 'index.js');
-        exists = fs.existsSync(watcherFile);
-      }
+          if (!exists) {
+            watcherFile = path.join(dirPath, dir, 'index.js');
+            exists = fs.existsSync(watcherFile);
+          }
 
-      if (!exists) {
-        spinner.warn(`No implementation found for ${logWatcherName(dir)}`);
-        continue;
-      }
+          if (!exists) {
+            task.title = `${logWatcherName(dir)}: No implementation found`;
+            task.skip(`No implementation found for ${dir}`);
+            return;
+          }
 
-      // Use an absolute file URL for imports
-      const fileUrl = `file://${watcherFile.replace(/\\/g, '/')}`;
-      const module = await import(fileUrl);
-      watchers.push(module.default);
-      spinner.succeed(`Loaded ${logWatcherName(dir)}`);
-    } catch (error) {
-      spinner.fail(`Failed to load ${logWatcherName(dir)}`);
-      logError(`Error: ${error}\n`);
-    }
-  }
+          // Use an absolute file URL for imports
+          const fileUrl = `file://${watcherFile.replace(/\\/g, '/')}`;
+          const module = await import(fileUrl);
+          watchers.push(module.default);
+          task.title = `Loaded ${logWatcherName(dir)}`;
+        } catch (error) {
+          task.title = `Failed to load ${logWatcherName(dir)}`;
+          throw new Error(`Error: ${error}`);
+        }
+      },
+    })),
+    { concurrent: false, exitOnError: false }
+  );
+
+  await tasks.run();
 };
 
 export default watchers;

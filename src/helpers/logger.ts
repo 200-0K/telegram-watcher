@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import ora from 'ora';
 
 export const formatMessage = (
   message: string,
@@ -15,14 +14,6 @@ export const formatMessage = (
     default:
       return chalk.gray(message);
   }
-};
-
-export const createSpinner = (message: string) => {
-  return ora({
-    text: message,
-    color: 'cyan',
-    spinner: 'dots',
-  }).start();
 };
 
 export const logInfo = (message: string) => {

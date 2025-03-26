@@ -7,7 +7,7 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
-import ora from 'ora';
+import { Listr } from 'listr2';
 
 // Get current directory since __dirname is not available in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -168,41 +168,49 @@ const createWatcher = async (watcherName, options = {}) => {
         additionalDeps = deps;
       }
 
-      const spinner = ora('Installing dependencies...').start();
-      try {
-        // Store original directory
-        const originalDir = process.cwd();
+      // Store original directory
+      const originalDir = process.cwd();
+      // Change to watcher directory
+      process.chdir(watcherDir);
 
-        // Change to watcher directory
-        process.chdir(watcherDir);
+      const installTasks = [];
 
-        // Install base dependencies
-        execSync('npm install', { stdio: 'pipe' });
+      // Add base dependencies installation task
+      installTasks.push({
+        title: 'Installing dependencies',
+        task: () => {
+          execSync('npm install', { stdio: 'pipe' });
+        },
+      });
 
-        // Install additional dependencies if specified
-        if (additionalDeps) {
-          const deps = additionalDeps.split(/\s+/).filter(Boolean);
-          if (deps.length > 0) {
-            spinner.text = 'Installing additional dependencies...';
-            execSync(`npm install ${deps.join(' ')}`, { stdio: 'pipe' });
-          }
+      // Add additional dependencies if specified
+      if (additionalDeps) {
+        const deps = additionalDeps.split(/\s+/).filter(Boolean);
+        if (deps.length > 0) {
+          installTasks.push({
+            title: 'Installing additional dependencies',
+            task: () => {
+              execSync(`npm install ${deps.join(' ')}`, { stdio: 'pipe' });
+            },
+          });
         }
+      }
 
-        // Change back to original directory
-        process.chdir(originalDir);
+      // Create and run the installation tasks
+      const tasks = new Listr(installTasks, { exitOnError: false });
 
-        spinner.succeed('Dependencies installed successfully');
+      try {
+        await tasks.run();
+        console.log(chalk.green('Dependencies installed successfully'));
       } catch (error) {
-        spinner.fail('Failed to install dependencies');
         console.error(chalk.red('\nError installing dependencies:'));
         console.error(chalk.red(error.message));
         console.log(chalk.yellow('\nYou can try installing dependencies manually by running:'));
         console.log(chalk.cyan(`cd watchers/${watcherName}`));
         console.log(chalk.cyan('npm install'));
-        if (additionalDeps) {
-          console.log(chalk.cyan(`npm install ${additionalDeps}`));
-        }
-        process.exit(1);
+      } finally {
+        // Change back to original directory
+        process.chdir(originalDir);
       }
     }
   } catch (error) {

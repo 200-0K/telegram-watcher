@@ -9,20 +9,13 @@ import {
   logSuccess,
   logWatcherName,
   logCount,
-  createSpinner,
   logHeader,
   logSection,
 } from '@/helpers/logger.js';
+import { Listr } from 'listr2';
+import chalk from 'chalk';
 
-const runWatcher = async (watcher: Watcher) => {
-  // Skip disabled watchers
-  if (watcher.enabled === false) {
-    logInfo(`⏭️${logWatcherName(watcher.name)} (disabled)`);
-    return;
-  }
-
-  const spinner = createSpinner(`Running ${logWatcherName(watcher.name)}`);
-
+const runWatcher = async (watcher: Watcher, ctx: any) => {
   try {
     let message: string | null = null;
 
@@ -56,14 +49,14 @@ const runWatcher = async (watcher: Watcher) => {
     }
 
     if (message) {
-      spinner.succeed(`${logWatcherName(watcher.name)}: Changes detected`);
       await report(watcher.name, message);
+      return { name: watcher.name, message, status: 'changed' };
     } else {
-      spinner.info(`${logWatcherName(watcher.name)}: No changes`);
+      return { name: watcher.name, message: null, status: 'unchanged' };
     }
   } catch (e) {
-    spinner.fail(`${logWatcherName(watcher.name)}: Failed`);
     await report(watcher.name, `Error:\n\`\`\`\n${e}\n\`\`\``);
+    return { name: watcher.name, message: String(e), status: 'error' };
   }
 };
 
@@ -73,8 +66,29 @@ const runWatchers = async () => {
   // Dynamically load all watchers
   const watchers = await loadWatchers();
 
-  // Run all watchers in parallel
-  await Promise.all(watchers.map(watcher => runWatcher(watcher)));
+  // Create tasks for Listr
+  const tasks = new Listr(
+    watchers.map(watcher => ({
+      title: `Running ${logWatcherName(watcher.name)}`,
+      skip: () =>
+        watcher.enabled === false ? `${watcher.name} ${chalk.dim('(disabled)')}` : false,
+      task: async (ctx, task) => {
+        const result = await runWatcher(watcher, ctx);
+
+        if (result.status === 'changed') {
+          task.title = `${logWatcherName(watcher.name)}: Changes detected`;
+        } else if (result.status === 'unchanged') {
+          task.title = `${logWatcherName(watcher.name)}: No changes`;
+        } else if (result.status === 'error') {
+          task.title = `${logWatcherName(watcher.name)}: Failed`;
+          throw new Error(result.message || 'Unknown error');
+        }
+      },
+    })),
+    { concurrent: true, exitOnError: false }
+  );
+
+  await tasks.run();
 
   logSection('All watchers completed');
 };
