@@ -1,4 +1,4 @@
-import { Channel } from "./channel.js";
+// import { Channel } from './channel.js';
 
 // Base interface for all watchers - only truly shared properties
 interface BaseWatcher {

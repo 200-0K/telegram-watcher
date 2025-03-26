@@ -1,8 +1,8 @@
-import { parseJson } from "@/helpers/json.js";
-import { report } from "@/helpers/notifier.js";
-import { loadWatchers } from "@/watchers.js";
+import { parseJson } from '@/helpers/json.js';
+import { report } from '@/helpers/notifier.js';
+import { loadWatchers } from '@/watchers.js';
 import { readFile } from 'fs/promises';
-import { Watcher } from "./types/watcher.js";
+import { Watcher } from './types/watcher.js';
 import {
   logInfo,
   logError,
@@ -11,13 +11,13 @@ import {
   logCount,
   createSpinner,
   logHeader,
-  logSection
-} from "@/helpers/logger.js";
+  logSection,
+} from '@/helpers/logger.js';
 
 const runWatcher = async (watcher: Watcher) => {
   // Skip disabled watchers
   if (watcher.enabled === false) {
-    logInfo(`⏭️  ${logWatcherName(watcher.name)} (disabled)`);
+    logInfo(`⏭️${logWatcherName(watcher.name)} (disabled)`);
     return;
   }
 

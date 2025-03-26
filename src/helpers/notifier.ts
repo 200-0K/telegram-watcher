@@ -1,12 +1,12 @@
-import { telegram } from "@/notifiers/telegram.js";
+import { telegram } from '@/notifiers/telegram.js';
 
 function splitMessage(message: string) {
   let maxSize = 4000;
   const parts: string[] = [];
-  let part = "";
+  let part = '';
   let codeBlock: string | null = null;
 
-  const lines = message.split("\n");
+  const lines = message.split('\n');
   let i = 0;
 
   while (i < lines.length) {
@@ -16,7 +16,7 @@ function splitMessage(message: string) {
         part += '```\n';
       }
       parts.push(part);
-      part = "";
+      part = '';
       continue;
     }
 
@@ -44,7 +44,7 @@ function splitMessage(message: string) {
       codeBlock = line;
     }
 
-    part += line + "\n";
+    part += line + '\n';
     i++;
   }
 
@@ -61,15 +61,12 @@ export const report = async (watcherName: string, message: string) => {
   // First part with watcher name and page indicator
   await telegram.send(
     `☀️ *Watcher*: _${watcherName}_\n\n` +
-    `📋 *Report*${parts.length > 1 ? ` (Part 1/${parts.length})` : ''}:\n` +
-    `${parts[0]}`
+      `📋 *Report*${parts.length > 1 ? ` (Part 1/${parts.length})` : ''}:\n` +
+      `${parts[0]}`
   );
 
   // Remaining parts with page indicators
   for (let i = 1; i < parts.length; i++) {
-    await telegram.send(
-      `📋 *Report* (Part ${i + 1}/${parts.length}):\n` +
-      `${parts[i]}`
-    );
+    await telegram.send(`📋 *Report* (Part ${i + 1}/${parts.length}):\n` + `${parts[i]}`);
   }
-}
+};

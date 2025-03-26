@@ -6,10 +6,33 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "create-watcher": "node scripts/create-watcher.js"
+    "create-watcher": "node scripts/create-watcher.js",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "format": "prettier --write \"**/*.{ts,js,json}\"",
+    "fix": "npm run lint:fix && npm run format"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "telegram",
+    "bot",
+    "monitoring",
+    "notifications",
+    "web-scraping",
+    "automation"
+  ],
+  "author": {
+    "name": "Faisal",
+    "email": "faisal.s.alnamlah@gmail.com",
+    "url": "https://github.com/200-0K"
+  },
+  "homepage": "https://github.com/200-0K/telegram-watcher",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/200-0K/telegram-watcher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/200-0K/telegram-watcher/issues"
+  },
   "license": "ISC",
   "dependencies": {
     "@types/node-localstorage": "^1.3.3",
@@ -24,11 +47,21 @@
     "ora": "^8.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.23.0",
     "@types/node": "^22.5.5",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.5",
+    "prettier": "^3.5.3",
     "tsx": "^4.19.3",
     "typescript": "^5.6.2"
   },
   "imports": {
     "@/*": "./src/*"
+  },
+  "bin": {
+    "telegram-watcher": "./bin/telegram-watcher"
   }
 }

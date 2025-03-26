@@ -1,0 +1,5 @@
+#!/bin/bash
+# Change to the parent directory of this script
+cd "$(dirname "$0")/.."
+# Run the npm command
+exec npm run start 

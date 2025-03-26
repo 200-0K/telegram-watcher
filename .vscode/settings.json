@@ -1,5 +1,10 @@
 {
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.validate": ["javascript", "typescript"],
   "window.title": "${dirty}${activeEditorShort}${separator}Watcher${separator}${profileName}${separator}${appName}",
   "cSpell.words": [
     "esrun"

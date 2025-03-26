@@ -25,12 +25,17 @@ The script is designed to run as a scheduled task. You can set up scheduling usi
 2. Create a new task
 3. Set the trigger to "On startup" or a specific schedule
 4. Set the action to run: `npm start` in the project directory
+   
+   Or use the provided script: `bin\telegram-watcher.bat`
 
 #### Linux/Mac (cron)
 Add to your crontab:
 ```bash
 # Run every 5 minutes
 */5 * * * * cd /path/to/telegram-watcher && npm start
+
+# Alternatively, use the provided script
+*/5 * * * * /path/to/telegram-watcher/bin/telegram-watcher
 ```
 
 Each time the script runs, it will:
@@ -49,20 +54,26 @@ Each time the script runs, it will:
 - Custom monitoring logic through managed watchers
 - Error reporting via Telegram
 - Simple plugin system for creating new watchers
+- Cross-platform executable scripts
 
 ## Project Structure
 
 ```
 telegram-watcher/
-├── src/                # Main application code
-│   ├── helpers/        # Utility functions
-│   ├── types/          # TypeScript type definitions
+├── bin/               # Executable scripts
+│   ├── telegram-watcher      # Unix executable
+│   ├── telegram-watcher.sh   # Shell script
+│   ├── telegram-watcher.bat  # Windows batch file
+│   └── telegram-watcher.ps1  # PowerShell script
+├── src/               # Main application code
+│   ├── helpers/       # Utility functions
+│   ├── types/         # TypeScript type definitions
 │   └── ...            # Other source files
 ├── scripts/           # Utility scripts
 │   └── create-watcher.js  # Watcher creation tool
-├── watchers/           # All watchers
-│   └── my-watcher/     # Example watcher
-│       ├── src/        # Source code
+├── watchers/          # All watchers
+│   └── my-watcher/    # Example watcher
+│       ├── src/       # Source code
 │       │   └── index.ts
 │       ├── package.json
 │       └── tsconfig.json
@@ -75,6 +86,50 @@ telegram-watcher/
 2. Copy `.env.example` to `.env` and configure your Telegram bot token
 3. Install dependencies: `npm install`
 4. Run the application: `npm start`
+
+### Running with Executable Scripts
+
+For convenience, the project includes executable scripts in the `bin` directory:
+
+#### Windows
+```
+bin\telegram-watcher.bat
+```
+
+Or with PowerShell:
+```
+bin\telegram-watcher.ps1
+```
+
+#### macOS/Linux
+First, make the scripts executable:
+```
+chmod +x bin/telegram-watcher
+chmod +x bin/telegram-watcher.sh
+```
+
+Then run:
+```
+./bin/telegram-watcher
+```
+
+Or:
+```
+./bin/telegram-watcher.sh
+```
+
+### Global Installation
+
+You can also install the package globally to make the `telegram-watcher` command available system-wide:
+
+```
+npm install -g .
+```
+
+Then run from anywhere:
+```
+telegram-watcher
+```
 
 ## Creating a New Watcher
 
