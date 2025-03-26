@@ -6,9 +6,9 @@ import { localStorage } from "{{LOCALSTORAGE_PATH}}";
  */
 const watcher: Watcher = {
     name: '{{DISPLAY_NAME}}',
+    enabled: true,
     type: 'url',
     url: 'https://api.example.com/endpoint',
-    enabled: true,
     responseType: 'json', // Use 'text' if the API returns plain text
 
     // Optional: Add custom headers if needed

@@ -3,16 +3,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import readline from 'readline';
+import { Command } from 'commander';
+import inquirer from 'inquirer';
+import chalk from 'chalk';
+import { execSync } from 'child_process';
+import ora from 'ora';
 
 // Get current directory since __dirname is not available in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+const program = new Command();
 
 /**
  * Validates a watcher name
@@ -91,13 +92,15 @@ const createTsConfigFile = (targetPath) => {
     fs.copyFileSync(stubPath, targetPath);
 };
 
-// Prompt for watcher name
-rl.question('Enter the name of your watcher (lowercase, no spaces): ', (watcherName) => {
+/**
+ * Creates a new watcher with the given name
+ * @param {string} watcherName - The name of the watcher to create
+ * @param {Object} options - Command line options
+ */
+const createWatcher = async (watcherName, options = {}) => {
     // Validate watcher name
     if (!validateWatcherName(watcherName)) {
-        console.error('Error: Watcher name must contain only lowercase letters, numbers, and hyphens');
-        rl.close();
-        return;
+        throw new Error('Watcher name must contain only lowercase letters, numbers, and hyphens');
     }
 
     // Create watcher in watchers directory with src subfolder
@@ -107,9 +110,7 @@ rl.question('Enter the name of your watcher (lowercase, no spaces): ', (watcherN
 
     // Check if watcher already exists
     if (fs.existsSync(watcherDir)) {
-        console.error(`Error: Watcher '${watcherName}' already exists`);
-        rl.close();
-        return;
+        throw new Error(`Watcher '${watcherName}' already exists`);
     }
 
     try {
@@ -130,22 +131,124 @@ rl.question('Enter the name of your watcher (lowercase, no spaces): ', (watcherN
         // Create watcher file from template
         createWatcherFile(watcherPath, watcherName);
 
-        console.log(`Successfully created watcher '${watcherName}' with folder structure:`);
-        console.log(`- ${watcherDir}/`);
-        console.log(`  ├── src/`);
-        console.log(`  │   └── index.ts     # Main watcher implementation`);
-        console.log(`  ├── package.json`);
-        console.log(`  └── tsconfig.json`);
+        console.log(chalk.green(`\nSuccessfully created watcher '${watcherName}' with folder structure:`));
+        console.log(chalk.cyan(`- ${watcherDir}/`));
+        console.log(chalk.cyan(`  ├── src/`));
+        console.log(chalk.cyan(`  │   └── index.ts     # Main watcher implementation`));
+        console.log(chalk.cyan(`  ├── package.json`));
+        console.log(chalk.cyan(`  └── tsconfig.json`));
 
-        console.log('\nYou can now edit the watcher implementation at:');
-        console.log(watcherPath);
+        console.log(chalk.yellow('\nYou can now edit the watcher implementation at:'));
+        console.log(chalk.cyan(watcherPath));
 
-        console.log('\nTo install additional dependencies for your watcher:');
-        console.log(`cd watchers/${watcherName}`);
-        console.log('npm install your-dependency');
+        // Handle dependency installation
+        let shouldInstall = options.yes;
+        let additionalDeps = options.deps;
+
+        if (!options.yes) {
+            const { installDeps } = await inquirer.prompt([
+                {
+                    type: 'confirm',
+                    name: 'installDeps',
+                    message: 'Would you like to install dependencies now?',
+                    default: true
+                }
+            ]);
+            shouldInstall = installDeps;
+        }
+
+        if (shouldInstall) {
+            if (!additionalDeps && !options.yes) {
+                const { deps } = await inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'deps',
+                        message: 'Enter additional dependencies to install (space-separated, optional):',
+                        default: '',
+                        filter: (input) => input.trim()
+                    }
+                ]);
+                additionalDeps = deps;
+            }
+
+            const spinner = ora('Installing dependencies...').start();
+            try {
+                // Store original directory
+                const originalDir = process.cwd();
+
+                // Change to watcher directory
+                process.chdir(watcherDir);
+
+                // Install base dependencies
+                execSync('npm install', { stdio: 'pipe' });
+
+                // Install additional dependencies if specified
+                if (additionalDeps) {
+                    const deps = additionalDeps.split(/\s+/).filter(Boolean);
+                    if (deps.length > 0) {
+                        spinner.text = 'Installing additional dependencies...';
+                        execSync(`npm install ${deps.join(' ')}`, { stdio: 'pipe' });
+                    }
+                }
+
+                // Change back to original directory
+                process.chdir(originalDir);
+
+                spinner.succeed('Dependencies installed successfully');
+            } catch (error) {
+                spinner.fail('Failed to install dependencies');
+                console.error(chalk.red('\nError installing dependencies:'));
+                console.error(chalk.red(error.message));
+                console.log(chalk.yellow('\nYou can try installing dependencies manually by running:'));
+                console.log(chalk.cyan(`cd watchers/${watcherName}`));
+                console.log(chalk.cyan('npm install'));
+                if (additionalDeps) {
+                    console.log(chalk.cyan(`npm install ${additionalDeps}`));
+                }
+                process.exit(1);
+            }
+        }
     } catch (error) {
-        console.error(`Error creating watcher: ${error.message}`);
+        throw error;
     }
+};
 
-    rl.close();
-}); 
+program
+    .name('create-watcher')
+    .description('Create a new watcher for the Telegram Watcher system')
+    .version('1.0.0')
+    .argument('[name]', 'Name of the watcher to create')
+    .option('-i, --interactive', 'Force interactive mode')
+    .option('-y, --yes', 'Skip prompts and use defaults')
+    .option('-d, --deps <dependencies>', 'Additional dependencies to install (space-separated)')
+    .action(async (name, options) => {
+        try {
+            if (options.interactive || !name) {
+                // Interactive mode
+                const { watcherName } = await inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'watcherName',
+                        message: 'Enter the name of your watcher:',
+                        default: name,
+                        validate: (input) => {
+                            if (!validateWatcherName(input)) {
+                                return 'Watcher name must contain only lowercase letters, numbers, and hyphens';
+                            }
+                            return true;
+                        }
+                    }
+                ]);
+                await createWatcher(watcherName, options);
+            } else {
+                // Direct mode
+                await createWatcher(name, options);
+            }
+        } catch (error) {
+            console.error(chalk.red(`Error: ${error.message}`));
+            process.exit(1);
+        }
+    });
+
+// Parse command line arguments
+program.parse(); 
